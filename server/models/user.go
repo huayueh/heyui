@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -54,4 +55,16 @@ func (u *User) FindUserByFullName(db *gorm.DB, fullname string) (*[]User, error)
 		return &[]User{}, err
 	}
 	return &users, err
+}
+
+func (u *User) FindUserByID(db *gorm.DB, uid string) (*User, error) {
+	var err error
+	err = db.Debug().Model(User{}).Where("acct = ?", uid).Take(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	if gorm.IsRecordNotFoundError(err) {
+		return &User{}, errors.New("user not found")
+	}
+	return u, err
 }
