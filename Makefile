@@ -35,6 +35,7 @@ postgres:
 clean:
 	go clean
 	rm -rvf $(KEYFOLDER)
+	rm -rvf docs
 
 doc:
 	swag init --parseInternal --parseDependency
@@ -43,3 +44,4 @@ build: clean doc keygen
 	go mod download && go mod verify
 	go test -race ./...
 	go build -v -o server -gcflags='-N -l' -ldflags "-X main.ServiceVersion=$(VERSION)" main.go
+	docker build -t $(APP_NAME):$(VERSION) .
