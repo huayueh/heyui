@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  app:
+    image: heyui:1.0
+    restart: always
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ./.env.docker:/app/.env
+      - ./key-pair:/app/key-pair
+      - ./certs:/app/certs
+  postgres:
+    image: postgres:14.2
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "postgres", "-U", "root" ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+      - APP_DB_USER=ui_test
+      - APP_DB_PASS=ui_test
+      - APP_DB_NAME=ui_test
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d/
+    ports:
+      - "5432:5432"
