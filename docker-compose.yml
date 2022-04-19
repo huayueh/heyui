@@ -29,3 +29,13 @@ services:
       - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d/
     ports:
       - "5432:5432"
+
+  envoy:
+    image: envoyproxy/envoy:v1.21.1
+    ports:
+      - "9901:9901"
+      - "8443:8443"
+    restart: always
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+      - ./certs:/etc/envoy/certs

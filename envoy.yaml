@@ -1,0 +1,85 @@
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+  listeners:
+    - name: listener_https
+      address:
+        socket_address: { address: 0.0.0.0, port_value: 8443 }
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: heyui
+                upgrade_configs:
+                  - upgrade_type: websocket
+                codec_type: AUTO
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: localhost
+                      domains: ["*"]
+                      virtual_clusters:
+                        - name: create_user
+                          headers: { "name": "create_user", "exact_match": "POST" }
+                        - name: list_user
+                          headers: { "name": "list_user", "exact_match": "GET" }
+                        - name: get_user
+                          headers: { "name": "get_user", "exact_match": "GET" }
+                        - name: update_user
+                          headers: { "name": "update_user", "exact_match": "PUT" }
+                        - name: delete_user
+                          headers: { "name": "delete_user", "exact_match": "DELETE" }
+                        - name: user_login
+                          headers: { "name": "user_login", "exact_match": "POST" }
+                      routes:
+                        - match: { prefix: "/api/v1" }
+                          route: { cluster: heyui }
+                        - match: { prefix: "/swagger" }
+                          route: { cluster: heyui }
+                        - match: { prefix: "/login" }
+                          route: { cluster: heyui }
+                        - match: { prefix: "/ws/v1" }
+                          route: { cluster: heyuiws }
+                http_filters:
+                  - name: envoy.filters.http.router
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              common_tls_context:
+                tls_certificates:
+                  - certificate_chain:
+                      filename: "/etc/envoy/certs/localhost.pem"
+                    private_key:
+                      filename: "/etc/envoy/certs/localhost-key.pem"
+  clusters:
+    - name: heyui
+      connect_timeout: 0.25s
+      type: LOGICAL_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: heyui
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: host.docker.internal
+                      port_value: 8080
+    - name: heyuiws
+      connect_timeout: 0.25s
+      type: LOGICAL_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: heyuiws
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: host.docker.internal
+                      port_value: 8081
+

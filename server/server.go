@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -27,7 +28,10 @@ func (s *Server) initializePageRoutes() {
 	s.Router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 
 	s.Router.Path("/login").Handler(
-		(http.HandlerFunc(controllers.ShowLoginForm)),
+		csrf.Protect(
+			[]byte("538ce40f-2b40-4acd-bdf0-d1570b4168cf"),
+			csrf.Secure(false),
+		)(http.HandlerFunc(controllers.ShowLoginForm)),
 	).Methods("GET")
 }
 
@@ -48,7 +52,10 @@ func (s *Server) initializeApiRoutes() {
 		Methods("GET")
 
 	s.Router.Path("/api/v1/auth/login/csrf").Handler(
-		http.HandlerFunc(uc.Login),
+		csrf.Protect(
+			[]byte("538ce40f-2b40-4acd-bdf0-d1570b4168cf"),
+			csrf.Secure(false),
+		)(http.HandlerFunc(uc.Login)),
 	).Methods("POST")
 
 	s.Router.HandleFunc("/api/v1/auth/login",

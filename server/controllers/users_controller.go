@@ -3,7 +3,9 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/jinzhu/gorm"
 	"heyui/server/auth"
 	"heyui/utils/formaterror"
@@ -289,4 +291,11 @@ func toResponse(users *[]models.User) []models.UserRep {
 
 func repLoginErr(acct string, w http.ResponseWriter, statusCode int, err error) {
 	responses.ERROR(w, statusCode, err)
+	if con, ok := GetWSConn(acct); ok {
+		errMsg := fmt.Sprintf("login fail: %v", err.Error())
+		text := []byte(errMsg)
+		if err := con.WriteMessage(websocket.TextMessage, text); err != nil {
+			//TODO: log with warning
+		}
+	}
 }
