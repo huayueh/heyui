@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
+	"heyui/server/auth"
 	"heyui/utils/formaterror"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +17,41 @@ import (
 
 type UserController struct {
 	DB *gorm.DB
+}
+
+func (u *UserController) Login(w http.ResponseWriter, r *http.Request) {
+	var token string
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+	}
+
+	user := models.User{}
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+	}
+	err = user.Validate("login")
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	inpwd := user.Pwd
+	_, err = user.FindUserByID(u.DB, user.Acct)
+	if err != nil {
+		repLoginErr(user.Acct, w, http.StatusBadRequest, err)
+		return
+	}
+	err = auth.VerifyPassword(user.Pwd, inpwd)
+	if err != nil {
+		repLoginErr(user.Acct, w, http.StatusUnauthorized, errors.New("incorrect account or password"))
+		return
+	}
+	token, err = auth.CreateToken(user.Acct)
+
+	responses.JSON(w, http.StatusOK, struct {
+		Token string `json:"token"`
+	}{Token: token})
 }
 
 func (u *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -87,4 +124,8 @@ func toResponse(users *[]models.User) []models.UserRep {
 		usersRep = append(usersRep, u.ToResponse())
 	}
 	return usersRep
+}
+
+func repLoginErr(acct string, w http.ResponseWriter, statusCode int, err error) {
+	responses.ERROR(w, statusCode, err)
 }
