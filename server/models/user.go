@@ -2,6 +2,9 @@ package models
 
 import (
 	"errors"
+	"heyui/server/auth"
+	"html"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -20,6 +23,65 @@ type UserRep struct {
 	Fullname  string    `json:"fullname"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (u *User) BeforeSave() error {
+	hashedPassword, err := auth.Hash(u.Pwd)
+	if err != nil {
+		return err
+	}
+	u.Pwd = string(hashedPassword)
+	return nil
+}
+
+func (u *User) Prepare() {
+	u.Acct = html.EscapeString(strings.TrimSpace(u.Acct))
+	u.Fullname = html.EscapeString(strings.TrimSpace(u.Fullname))
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
+}
+
+func (u *User) Validate(action string) error {
+	switch strings.ToLower(action) {
+	case "create":
+		if u.Acct == "" {
+			return errors.New("account required")
+		}
+		if u.Fullname == "" {
+			return errors.New("fullname required")
+		}
+		if u.Pwd == "" {
+			return errors.New("password required")
+		}
+		return nil
+	case "update":
+		if u.Fullname == "" || u.Pwd == "" {
+			return errors.New("nothing to update")
+		}
+		return nil
+	case "fullname":
+		if u.Fullname == "" {
+			return errors.New("fullname required to update")
+		}
+		return nil
+	case "login":
+		if u.Acct == "" || u.Pwd == "" {
+			return errors.New("missing account or password for login")
+		}
+		return nil
+
+	default:
+		return nil
+	}
+}
+
+func (u *User) SaveUser(db *gorm.DB) (*User, error) {
+	var err error
+	err = db.Debug().Create(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	return u, nil
 }
 
 func (u *User) ToResponse() UserRep {

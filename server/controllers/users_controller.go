@@ -1,8 +1,11 @@
 package controllers
 
 import (
+	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
+	"heyui/utils/formaterror"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -12,6 +15,33 @@ import (
 
 type UserController struct {
 	DB *gorm.DB
+}
+
+func (u *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+	}
+	user := models.User{}
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	user.Prepare()
+	err = user.Validate("create")
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	userCreated, err := user.SaveUser(u.DB)
+
+	if err != nil {
+		formattedError := formaterror.FormatError(err.Error())
+		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		return
+	}
+	responses.JSON(w, http.StatusCreated, userCreated.ToResponse())
 }
 
 func (u *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
