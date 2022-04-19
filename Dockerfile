@@ -15,5 +15,6 @@ EXPOSE 8080
 EXPOSE 8081
 
 COPY --from=builder /app/main /app/
+COPY wsclient.html /app/
 
 ENTRYPOINT ["/app/main"]
