@@ -24,11 +24,52 @@ type Server struct {
 func (s *Server) initializeApiRoutes() {
 	uc := controllers.UserController{DB: s.DB}
 	//Users routes
+	s.Router.HandleFunc("/api/v1/users",
+		middlewares.SetHeaders(
+			middlewares.Auth(uc.GetUsersByFullName))).
+		Queries("fullname", "{fullname}").
+		Methods("GET")
+
+	s.Router.HandleFunc("/api/v1/users",
+		middlewares.SetHeaders(
+			middlewares.Auth(uc.GetUsersByPage))).
+		Queries("limit", "{limit}").
+		Queries("page", "{page}").
+		Methods("GET")
+
+	s.Router.HandleFunc("/api/v1/auth/login",
+		middlewares.SetHeaders(uc.Login)).
+		Methods("POST")
+
+	s.Router.HandleFunc("/api/v1/users",
+		middlewares.SetHeaders(uc.CreateUser)).
+		Methods("POST")
 
 	s.Router.HandleFunc("/api/v1/users",
 		middlewares.SetHeaders(
 			middlewares.Auth(uc.GetUsers))).
 		Methods("GET")
+
+	s.Router.HandleFunc("/api/v1/users/{acct}",
+		middlewares.SetHeaders(
+			middlewares.Auth(uc.GetUser))).
+		Methods("GET")
+
+	s.Router.HandleFunc("/api/v1/users/{acct}",
+		middlewares.SetHeaders(
+			middlewares.Auth(uc.UpdateUser))).
+		Methods("PUT")
+
+	s.Router.HandleFunc("/api/v1/users/{acct}/fullname",
+		middlewares.SetHeaders(
+			middlewares.Auth(uc.UpdateFullname))).
+		Methods("PUT")
+
+	s.Router.HandleFunc("/api/v1/users/{acct}",
+		middlewares.SetHeaders(
+			middlewares.Auth(uc.DeleteUser))).
+		Methods("DELETE")
+
 }
 
 func (s *Server) Run(port string) {
