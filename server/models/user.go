@@ -119,6 +119,18 @@ func (u *User) UpdateUser(db *gorm.DB, uid string) (*User, error) {
 	return u, nil
 }
 
+func PagingUsers(db *gorm.DB, pagination Pagination) (*Pagination, error) {
+	var users []User
+
+	err := db.Debug().Model(&User{}).Scopes(paginate(users, &pagination, db)).Find(&users).Error
+	if err != nil {
+		return &pagination, err
+	}
+	pagination.Rows = users
+
+	return &pagination, nil
+}
+
 func (u *User) ToResponse() UserRep {
 	return UserRep{
 		Acct:      u.Acct,

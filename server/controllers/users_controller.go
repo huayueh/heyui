@@ -162,6 +162,25 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, updatedUser.ToResponse())
 }
 
+func (u *UserController) GetUsersByPage(w http.ResponseWriter, r *http.Request) {
+	limit, err := strconv.Atoi(r.FormValue("limit"))
+	page, err := strconv.Atoi(r.FormValue("page"))
+
+	pagination := models.Pagination{
+		Limit: limit,
+		Page:  page,
+	}
+
+	pageUser, err := models.PagingUsers(u.DB, pagination)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	us := pageUser.Rows.([]models.User)
+	pageUser.Rows = toResponse(&us)
+	responses.JSON(w, http.StatusOK, pageUser)
+}
+
 func toResponse(users *[]models.User) []models.UserRep {
 	usersRep := make([]models.UserRep, 0)
 	for _, u := range *users {
