@@ -131,6 +131,24 @@ func PagingUsers(db *gorm.DB, pagination Pagination) (*Pagination, error) {
 	return &pagination, nil
 }
 
+func (u *User) UpdateFullname(db *gorm.DB, acct string) (*User, error) {
+	db = db.Debug().Model(&User{}).Where("acct = ?", acct).Take(&User{}).UpdateColumns(
+		map[string]interface{}{
+			"fullname":   u.Fullname,
+			"updated_at": time.Now(),
+		},
+	)
+	if db.Error != nil {
+		return &User{}, db.Error
+	}
+	// return updated user
+	err := db.Debug().Model(&User{}).Where("acct = ?", acct).Take(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	return u, nil
+}
+
 func (u *User) ToResponse() UserRep {
 	return UserRep{
 		Acct:      u.Acct,
