@@ -25,6 +25,18 @@ func (u *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, toResponse(users))
 }
 
+func (u *UserController) GetUsersByFullName(w http.ResponseWriter, r *http.Request) {
+	fullname := r.FormValue("fullname")
+
+	user := models.User{}
+	users, err := user.FindUserByFullName(u.DB, fullname)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.JSON(w, http.StatusOK, toResponse(users))
+}
+
 func toResponse(users *[]models.User) []models.UserRep {
 	usersRep := make([]models.UserRep, 0)
 	for _, u := range *users {

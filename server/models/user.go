@@ -45,3 +45,13 @@ func (u *User) FetchUsers(db *gorm.DB, limit int) (*[]User, error) {
 	}
 	return &users, err
 }
+
+func (u *User) FindUserByFullName(db *gorm.DB, fullname string) (*[]User, error) {
+	var err error
+	users := []User{}
+	err = db.Debug().Model(&User{}).Where("fullname = ?", fullname).Find(&users).Error
+	if err != nil {
+		return &[]User{}, err
+	}
+	return &users, err
+}
