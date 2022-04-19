@@ -84,6 +84,16 @@ func (u *User) SaveUser(db *gorm.DB) (*User, error) {
 	return u, nil
 }
 
+func (u *User) DeleteAUser(db *gorm.DB, uid string) (int64, error) {
+
+	db = db.Debug().Model(&User{}).Where("acct = ?", uid).Take(&User{}).Delete(&User{})
+
+	if db.Error != nil {
+		return 0, db.Error
+	}
+	return db.RowsAffected, nil
+}
+
 func (u *User) ToResponse() UserRep {
 	return UserRep{
 		Acct:      u.Acct,
