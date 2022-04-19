@@ -131,6 +131,37 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	responses.SUCCESS(w, http.StatusOK)
 }
 
+func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+	user := models.User{}
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	vars := mux.Vars(r)
+	user.Acct = vars["acct"]
+
+	user.Prepare()
+	err = user.Validate("update")
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	updatedUser, err := user.UpdateUser(u.DB, user.Acct)
+	if err != nil {
+		formattedError := formaterror.FormatError(err.Error())
+		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		return
+	}
+	responses.JSON(w, http.StatusOK, updatedUser.ToResponse())
+}
+
 func toResponse(users *[]models.User) []models.UserRep {
 	usersRep := make([]models.UserRep, 0)
 	for _, u := range *users {

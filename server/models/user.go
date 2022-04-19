@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"heyui/server/auth"
 	"html"
 	"strings"
@@ -92,6 +93,30 @@ func (u *User) DeleteAUser(db *gorm.DB, uid string) (int64, error) {
 		return 0, db.Error
 	}
 	return db.RowsAffected, nil
+}
+
+func (u *User) UpdateUser(db *gorm.DB, uid string) (*User, error) {
+	// hash the password
+	err := u.BeforeSave()
+	if err != nil {
+		fmt.Print(err)
+	}
+	db = db.Debug().Model(&User{}).Where("acct = ?", uid).Take(&User{}).UpdateColumns(
+		map[string]interface{}{
+			"pwd":        u.Pwd,
+			"fullname":   u.Fullname,
+			"updated_at": time.Now(),
+		},
+	)
+	if db.Error != nil {
+		return &User{}, db.Error
+	}
+	// return updated user
+	err = db.Debug().Model(&User{}).Where("acct = ?", uid).Take(&u).Error
+	if err != nil {
+		return &User{}, err
+	}
+	return u, nil
 }
 
 func (u *User) ToResponse() UserRep {
