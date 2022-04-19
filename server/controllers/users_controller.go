@@ -19,6 +19,13 @@ type UserController struct {
 	DB *gorm.DB
 }
 
+// Login godoc
+// @Summary User login
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 token {string}
+// @Router /api/v1/auth/login [post]
 func (u *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	var token string
 	body, err := ioutil.ReadAll(r.Body)
@@ -54,6 +61,13 @@ func (u *UserController) Login(w http.ResponseWriter, r *http.Request) {
 	}{Token: token})
 }
 
+// CreateUser godoc
+// @Summary Create a user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} models.UserRep
+// @Router /api/v1/users [post]
 func (u *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -81,6 +95,14 @@ func (u *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusCreated, userCreated.ToResponse())
 }
 
+// GetUsers godoc
+// @Summary Get details of users with default limited size 100
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} models.UserRep
+// @Router /api/v1/users [get]
+// @Param limit query string false "limit for query"
 func (u *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 	limit, err := strconv.Atoi(r.FormValue("limit"))
 	user := models.User{}
@@ -93,6 +115,14 @@ func (u *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, toResponse(users))
 }
 
+// GetUsersByFullName godoc
+// @Summary Get details of all users with same full name
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} models.UserRep
+// @Router /api/v1/users [get]
+// @Param fullname query string true "fullname for query"
 func (u *UserController) GetUsersByFullName(w http.ResponseWriter, r *http.Request) {
 	fullname := r.FormValue("fullname")
 
@@ -105,6 +135,13 @@ func (u *UserController) GetUsersByFullName(w http.ResponseWriter, r *http.Reque
 	responses.JSON(w, http.StatusOK, toResponse(users))
 }
 
+// GetUser godoc
+// @Summary Get details of the user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.UserRep
+// @Router /api/v1/users/{acct} [get]
 func (u *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid := vars["acct"]
@@ -118,6 +155,13 @@ func (u *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, userGotten.ToResponse())
 }
 
+// DeleteUser godoc
+// @Summary Delete the user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 ret {string}
+// @Router /api/v1/users/{acct} [delete]
 func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	user := models.User{}
@@ -131,6 +175,13 @@ func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	responses.SUCCESS(w, http.StatusOK)
 }
 
+// UpdateUser godoc
+// @Summary Update details of the user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.UserRep
+// @Router /api/v1/users/{acct} [put]
 func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -162,6 +213,15 @@ func (u *UserController) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, updatedUser.ToResponse())
 }
 
+// GetUsersByPage godoc
+// @Summary Get details of all users with pagination
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.Pagination
+// @Router /api/v1/users [get]
+// @Param page query string true "the page for query"
+// @Param limit query string true "size per page"
 func (u *UserController) GetUsersByPage(w http.ResponseWriter, r *http.Request) {
 	limit, err := strconv.Atoi(r.FormValue("limit"))
 	page, err := strconv.Atoi(r.FormValue("page"))
@@ -181,6 +241,13 @@ func (u *UserController) GetUsersByPage(w http.ResponseWriter, r *http.Request) 
 	responses.JSON(w, http.StatusOK, pageUser)
 }
 
+// UpdateFullname godoc
+// @Summary Update full name of the user
+// @Tags users
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} models.UserRep
+// @Router /api/v1/users/{acct}/fullname [put]
 func (u *UserController) UpdateFullname(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
