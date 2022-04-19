@@ -118,6 +118,19 @@ func (u *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, userGotten.ToResponse())
 }
 
+func (u *UserController) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	user := models.User{}
+	uid := vars["acct"]
+
+	_, err := user.DeleteAUser(u.DB, uid)
+	if err != nil {
+		responses.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	responses.SUCCESS(w, http.StatusOK)
+}
+
 func toResponse(users *[]models.User) []models.UserRep {
 	usersRep := make([]models.UserRep, 0)
 	for _, u := range *users {
