@@ -29,6 +29,7 @@ postgres:
 		-e APP_DB_PASS=ui_test \
 		-e APP_DB_NAME=ui_test \
 		-e PGDATA=/var/lib/postgresql/data/pgdata \
+		-v $(CURFOLDER)/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d \
 		postgres:14.2
 
 clean:
