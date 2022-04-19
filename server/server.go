@@ -25,6 +25,10 @@ type Server struct {
 
 func (s *Server) initializePageRoutes() {
 	s.Router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
+
+	s.Router.Path("/login").Handler(
+		(http.HandlerFunc(controllers.ShowLoginForm)),
+	).Methods("GET")
 }
 
 func (s *Server) initializeApiRoutes() {
@@ -42,6 +46,10 @@ func (s *Server) initializeApiRoutes() {
 		Queries("limit", "{limit}").
 		Queries("page", "{page}").
 		Methods("GET")
+
+	s.Router.Path("/api/v1/auth/login/csrf").Handler(
+		http.HandlerFunc(uc.Login),
+	).Methods("POST")
 
 	s.Router.HandleFunc("/api/v1/auth/login",
 		middlewares.SetHeaders(uc.Login)).
@@ -76,6 +84,7 @@ func (s *Server) initializeApiRoutes() {
 			middlewares.Auth(uc.DeleteUser))).
 		Methods("DELETE")
 
+	s.Router.PathPrefix("/swagger").Handler(httpSwagger.WrapHandler)
 }
 
 func (s *Server) Run(port string) {
@@ -110,6 +119,13 @@ func Start() {
 		os.Getenv("DB_NAME"))
 
 	auth.Initialize()
+
+	go func() {
+		addr := fmt.Sprintf(":%v", os.Getenv("WS_PORT"))
+		route := mux.NewRouter()
+		route.HandleFunc("/ws/v1/users/{acct}", controllers.WSconnection)
+		http.ListenAndServe(addr, route)
+	}()
 
 	server := Server{DB: appdb}
 	server.Run(os.Getenv("HTTP_PORT"))

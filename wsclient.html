@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>WS Client</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<script>
+    let protocol = location.protocol;
+
+    $(document).ready(function(){
+        $("#but_submit").click(function(){
+            let username = $("#txt_uname").val().trim();
+            let password = $("#txt_pwd").val().trim();
+            let token = $("input[name='gorilla.csrf.Token']").val().trim();
+
+            console.log("csrf:" + token);
+
+            if( username != "" && password != "" ){
+                let socket;
+
+                if (window.location.protocol == "https:") {
+                    socket = new WebSocket("wss://localhost:8443/ws/v1/users/" + username);
+                } else {
+                    socket = new WebSocket("ws://localhost:8081/ws/v1/users/" + username);
+                }
+
+                console.log("Attempting Connection...");
+
+                socket.onopen = () => {
+                    console.log("Successfully Connected");
+                    socket.send("Hi From the Client!")
+                };
+
+                socket.onmessage = (event) => {
+                    console.log("message from Server: ", event.data);
+                    const container = document.getElementById('msgcontainer');
+                    container.insertAdjacentHTML('beforeend', event.data + '</br>');
+                };
+
+                socket.onclose = event => {
+                    console.log("Socket Closed Connection: ", event);
+                    socket.send("Client Closed!")
+                };
+
+                socket.onerror = error => {
+                    console.log("Socket Error: ", error);
+                };
+
+                $.ajax({
+                    url:'api/v1/auth/login/csrf',
+                    type: "POST",
+                    headers: {
+                        'X-CSRF-TOKEN':token,
+                        'Content-Type':'application/json'
+                    },
+                    data:JSON.stringify({"acct":username,"pwd":password}),
+                    success: function (data, textStatus, jqXHR) {
+                        console.log(data);
+                    }
+                });
+                return false;
+            }
+        });
+    });
+</script>
+<body>
+<h2>Hello Websocket Tester</h2>
+
+<div class="container">
+    <div id="div_login">
+        <h3>Login</h3>
+        <div id="message"></div>
+        {{ .csrfField }}
+        <div>
+            <input type="text" class="textbox" id="txt_uname" name="txt_uname" placeholder="Username" />
+        </div>
+        <div>
+            <input type="password" class="textbox" id="txt_pwd" name="txt_pwd" placeholder="Password"/>
+        </div>
+        <div>
+            <input type="button" value="Submit" name="but_submit" id="but_submit" />
+        </div>
+    </div>
+</div>
+<h3>Websocket Message:</h3>
+<div id="msgcontainer" style="border-width:3px;border-style:dashed;border-color:#FFAC55;padding:5px;"/>
+</body>
+</html>
