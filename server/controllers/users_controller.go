@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	"net/http"
 	"strconv"
@@ -35,6 +36,19 @@ func (u *UserController) GetUsersByFullName(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	responses.JSON(w, http.StatusOK, toResponse(users))
+}
+
+func (u *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid := vars["acct"]
+
+	user := models.User{}
+	userGotten, err := user.FindUserByID(u.DB, uid)
+	if err != nil {
+		responses.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	responses.JSON(w, http.StatusOK, userGotten.ToResponse())
 }
 
 func toResponse(users *[]models.User) []models.UserRep {
